@@ -1,2 +1,6 @@
 # wBI_calculator
-Repository for a Course project in the 2nd year of HSE SE
+Репозиторий для Курсового проекта на 2-ом курсе ПИ
+
+Команда:
+Хашпаков Астемир БПИ242,
+Шемсетдинов Реджепмырат БПИ242
