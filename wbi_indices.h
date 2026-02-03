@@ -23,63 +23,54 @@ private:
     std::map<std::string, ll> country_to_index; // country_to_index["Russia"] = индекс
     
     // Функция для вычисления условной суммы группы
-    ll group_cond_sum(std::vector<ll>& group, ll node) {
-        ll group_size = group.size();
-        ll sum = 0;
-        for (ll i = 0; i < group_size; ++i) {
-            sum += in_weight[node][group[i]];
-        }
+    ll group_cond_sum(ll group_sum, ll node) {
+        // ll group_size = group.size();
+        // ll sum = 0;
+        // for (ll i = 0; i < group_size; ++i) {
+        //     sum += in_weight[node][group[i]];
+        // }
 
-        if (sum >= quota[node]) {
-            return sum;
+        if (group_sum >= quota[node]) {
+            return group_sum;
         }
+        
         return 0;
     }
     
     // Рекурсивная функция для генерации комбинаций
-    void combination(ll curr, ll count, std::vector<ll> v, ll node, ll option) {
+    void combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, ll option) {
         if (curr == count) {
             if (option == 1) {
-                wBI_1[node] += double(group_cond_sum(v, node)) / in_edges_sum[node];
+                wBI_1[node] += double(group_cond_sum(group_sum, node)) / in_edges_sum[node];
+                wBI_2[node] += double(group_cond_sum(group_sum, node)) / TOTAL_SUM;
             }
             else {
-                wBI_2[node] += double(group_cond_sum(v, node)) / TOTAL_SUM;
+                wBI_1[node] += double(group_cond_sum(group_sum, node)) / in_edges_sum[node];
+                wBI_2[node] += double(group_cond_sum(group_sum, node)) / TOTAL_SUM;
             }
 
             return;
         }
 
         ll in_count = in_nodes[node].size();
+        if (count - curr > in_count - 1 - last_ind) {
+            return;
+        }
 
-        for (ll i = 0; i < in_count; ++i) {
-            bool flag = 1;
-            for (ll j = 0; j < curr; ++j) {
-                if (in_nodes[node][i] <= v[j]) {
-                    flag = 0;
-                }
-            }
-            if (flag) {
-                v[curr] = in_nodes[node][i];
-                combination(curr + 1, count, v, node, option);
-            }
+        for (ll i = last_ind + 1; i < in_count; ++i) {
+            group_sum += in_weight[node][in_nodes[node][i]];
+            combination(curr + 1,  i, count, group_sum, node, option);
+            group_sum -= in_weight[node][in_nodes[node][i]];
         }
 
         return;
     }
     
-    // Функция для вычисления wBI_1 для одного узла
-    void calculate_wBI_1(ll node) {
+    // Функция для вычисления wBI_1 и wBI_2 для одного узла
+    void calculate_wBI(ll node) {
         for (ll i = 1; i <= K; ++i) {
-            std::vector<ll> v(i, 0);
-            combination(0, i, v, node, 1);
-        }
-    }
-    
-    // Функция для вычисления wBI_2 для одного узла
-    void calculate_wBI_2(ll node) {
-        for (ll i = 1; i <= K; ++i) {
-            std::vector<ll> v(i, 0);
-            combination(0, i, v, node, 2);
+            ll group_sum = 0;
+            combination(0, -1, i, group_sum, node, 1);
         }
     }
     
@@ -172,7 +163,7 @@ private:
                     //     << to_country << "(" << to_idx << ") = " << weight << std::endl;
                 }
                 else {
-                    // std::cout << "Warning: Unknown country in edge: " << from_country << " -> " << to_country << std::endl;
+                    std::cout << "Warning: Unknown country in edge: " << from_country << " -> " << to_country << std::endl;
                 }
             }
             else {
@@ -180,6 +171,13 @@ private:
             }
         }
         
+        // Нахождение узла с максимальным количеством входящих рёбер
+        ll mx_in_nodes = 0;
+        for (auto &el: in_nodes) {
+            mx_in_nodes = fmax(mx_in_nodes, el.size()); // ll -> double
+        }
+        std::cout << std::endl << "Maximum number of incoming edges = " << mx_in_nodes << std::endl;
+        // (Фрагмент кода для оценки времени вычисления)
         std::cout << "-------------------------" << std::endl << std::endl;
         
         file.close();
@@ -286,27 +284,19 @@ public:
         
         // Шаг 2.4 Параллельные вычисления
         auto start_time = std::chrono::high_resolution_clock::now();
-        std::cout << "Calculating wBI_1..." << std::endl;
+        std::cout << "Calculating wBI_1 and wBI_2...\n" << std::endl;
         #pragma omp parallel for
         for (ll i = 0; i < N; ++i) {
             // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
             // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
-            calculate_wBI_1(i);
-        }
-        
-        std::cout << "Calculating wBI_2..." << std::endl << std::endl;
-        #pragma omp parallel for
-        for (ll i = 0; i < N; ++i) {
-            // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
-            // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
-            calculate_wBI_2(i);
+            calculate_wBI(i);
         }
         
         auto end_time = std::chrono::high_resolution_clock::now();
         auto parallel_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
         
-        std::cout << "PARALLEL CALCULATING:" << "\n";
-        std::cout << "TIME: " << parallel_duration.count() << " ms" << "\n";
+        std::cout << "ПАРАЛЛЕЛЬНОЕ ВЫЧИСЛЕНИЕ:" << "\n";
+        std::cout << "Время: " << parallel_duration.count() << " мс" << "\n";
         std::cout << "\n";
 
         // Шаг 2.5: Записываем результаты в CSV
@@ -338,7 +328,60 @@ private:
         return command_exists("libreoffice");
     }
     
-    // Конвертация XLSX в CSV через Python (кросс-платформенная)
+    // Получение пути к текущей директории
+    std::string get_current_directory() {
+        char buffer[1024];
+        #ifdef _WIN32
+            _getcwd(buffer, sizeof(buffer));
+        #else
+            getcwd(buffer, sizeof(buffer));
+        #endif
+        return std::string(buffer);
+    }
+    
+    // Конвертация XLSX в CSV через PowerShell (Windows)
+    bool convert_xlsx_to_csv_powershell(const std::string& xlsx_file) {
+        std::string base_name = xlsx_file.substr(0, xlsx_file.find_last_of('.'));
+        std::string csv_file = base_name + ".csv";
+        std::string current_dir = get_current_directory();
+        
+        std::string command = "powershell -Command \""
+            "$excel = New-Object -ComObject Excel.Application; "
+            "$excel.Visible = $false; "
+            "$excel.DisplayAlerts = $false; "
+            "$workbook = $excel.Workbooks.Open('" + current_dir + "\\" + xlsx_file + "'); "
+            "$workbook.SaveAs('" + current_dir + "\\" + csv_file + "', 6); "  // 6 = xlCSV
+            "$workbook.Close(); "
+            "$excel.Quit(); "
+            "[System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null; "
+            "if (Test-Path '" + current_dir + "\\" + csv_file + "') { exit 0 } else { exit 1 }\"";
+        
+        int result = system(command.c_str());
+        return (result == 0);
+    }
+    
+    // Конвертация CSV в XLSX через PowerShell (Windows)
+    bool convert_csv_to_xlsx_powershell(const std::string& csv_file) {
+        std::string base_name = csv_file.substr(0, csv_file.find_last_of('.'));
+        std::string xlsx_file = base_name + ".xlsx";
+        std::string current_dir = get_current_directory();
+        
+        std::string command = "powershell -Command \""
+            "$excel = New-Object -ComObject Excel.Application; "
+            "$excel.Visible = $false; "
+            "$excel.DisplayAlerts = $false; "
+            "$workbook = $excel.Workbooks.Open('" + current_dir + "\\" + csv_file + "'); "
+            "$workbook.SaveAs('" + current_dir + "\\" + xlsx_file + "', 51); "  // 51 = xlOpenXMLWorkbook
+            "$workbook.Close(); "
+            "$excel.Quit(); "
+            "[System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null; "
+            "if (Test-Path '" + current_dir + "\\" + xlsx_file + "') { exit 0 } else { exit 1 }\"";
+        
+        int result = system(command.c_str());
+        return (result == 0);
+    }
+    
+    // Конвертация XLSX в CSV через Python
     bool convert_xlsx_to_csv_python(const std::string& xlsx_file) {
         std::string base_name = xlsx_file.substr(0, xlsx_file.find_last_of('.'));
         std::string csv_file = base_name + ".csv";
@@ -348,33 +391,21 @@ private:
         
         for (const auto& python_cmd : python_cmds) {
             if (command_exists(python_cmd)) {
-                // Создаем временный Python файл с правильным синтаксисом
-                std::string python_script = 
-                    "import sys\n"
-                    "try:\n"
-                    "    import pandas as pd\n"
-                    "    pd.read_excel('" + xlsx_file + "').to_csv('" + csv_file + "', index=False)\n"
-                    "    sys.exit(0)\n"
-                    "except ImportError:\n"
-                    "    print('ERROR: pandas not installed. Install with: pip install pandas openpyxl')\n"
-                    "    sys.exit(1)\n"
-                    "except Exception as e:\n"
-                    "    print('ERROR:', e)\n"
-                    "    sys.exit(1)";
+                std::string command = python_cmd + " -c \""
+                    "import sys; "
+                    "try: "
+                    "    import pandas as pd; "
+                    "    pd.read_excel('" + xlsx_file + "').to_csv('" + csv_file + "', index=False); "
+                    "    sys.exit(0); "
+                    "except ImportError: "
+                    "    print('pandas not installed. Install with: pip install pandas openpyxl'); "
+                    "    sys.exit(1); "
+                    "except Exception as e: "
+                    "    print('Error:', e); "
+                    "    sys.exit(1); "
+                    "\"";
                 
-                // Записываем скрипт во временный файл
-                std::ofstream script_file("temp_xlsx_to_csv.py");
-                if (!script_file) return false;
-                script_file << python_script;
-                script_file.close();
-                
-                // Запускаем Python скрипт
-                std::string command = python_cmd + " temp_xlsx_to_csv.py";
                 int result = system(command.c_str());
-                
-                // Удаляем временный файл
-                std::remove("temp_xlsx_to_csv.py");
-                
                 if (result == 0) {
                     return true;
                 }
@@ -393,33 +424,21 @@ private:
         
         for (const auto& python_cmd : python_cmds) {
             if (command_exists(python_cmd)) {
-                // Создаем временный Python файл с правильным синтаксисом
-                std::string python_script = 
-                    "import sys\n"
-                    "try:\n"
-                    "    import pandas as pd\n"
-                    "    pd.read_csv('" + csv_file + "').to_excel('" + xlsx_file + "', index=False)\n"
-                    "    sys.exit(0)\n"
-                    "except ImportError:\n"
-                    "    print('ERROR: pandas not installed. Install with: pip install pandas openpyxl')\n"
-                    "    sys.exit(1)\n"
-                    "except Exception as e:\n"
-                    "    print('ERROR:', e)\n"
-                    "    sys.exit(1)";
+                std::string command = python_cmd + " -c \""
+                    "import sys; "
+                    "try: "
+                    "    import pandas as pd; "
+                    "    pd.read_csv('" + csv_file + "').to_excel('" + xlsx_file + "', index=False); "
+                    "    sys.exit(0); "
+                    "except ImportError: "
+                    "    print('pandas not installed. Install with: pip install pandas openpyxl'); "
+                    "    sys.exit(1); "
+                    "except Exception as e: "
+                    "    print('Error:', e); "
+                    "    sys.exit(1); "
+                    "\"";
                 
-                // Записываем скрипт во временный файл
-                std::ofstream script_file("temp_csv_to_xlsx.py");
-                if (!script_file) return false;
-                script_file << python_script;
-                script_file.close();
-                
-                // Запускаем Python скрипт
-                std::string command = python_cmd + " temp_csv_to_xlsx.py";
                 int result = system(command.c_str());
-                
-                // Удаляем временный файл
-                std::remove("temp_csv_to_xlsx.py");
-                
                 if (result == 0) {
                     return true;
                 }
@@ -445,11 +464,14 @@ private:
 public:
     // Функция для конвертации XLSX в CSV (кросс-платформенная)
     bool convert_xlsx_to_csv(const std::string& xlsx_file) {
-        std::cout << "Converting " << xlsx_file << " to CSV..." << std::endl;
-        
         #ifdef _WIN32
-            // Windows: используем Python
-            std::cout << "Windows detected, using Python method..." << std::endl;
+            // Windows: сначала пробуем PowerShell, потом Python
+            if (convert_xlsx_to_csv_powershell(xlsx_file)) {
+                std::cout << "Successfully converted using PowerShell" << std::endl;
+                return true;
+            }
+            
+            std::cout << "PowerShell failed, trying Python..." << std::endl;
             if (python_available()) {
                 if (convert_xlsx_to_csv_python(xlsx_file)) {
                     std::cout << "Successfully converted using Python" << std::endl;
@@ -457,12 +479,10 @@ public:
                 }
             }
             
-            std::cerr << "Error: Python not available for conversion!" << std::endl;
-            std::cerr << "Please install Python with pandas: pip install pandas openpyxl" << std::endl;
+            std::cerr << "Error: Neither PowerShell nor Python available for conversion!" << std::endl;
             return false;
         #else
             // Linux/Unix: сначала пробуем LibreOffice, потом Python
-            std::cout << "Linux/Unix detected, trying LibreOffice..." << std::endl;
             if (libreoffice_available()) {
                 if (convert_xlsx_to_csv_libreoffice(xlsx_file)) {
                     std::cout << "Successfully converted using LibreOffice" << std::endl;
@@ -485,11 +505,14 @@ public:
     
     // Функция для конвертации CSV в XLSX (кросс-платформенная)
     bool convert_csv_to_xlsx(const std::string& csv_file) {
-        std::cout << "Converting " << csv_file << " to XLSX..." << std::endl;
-        
         #ifdef _WIN32
-            // Windows: используем Python
-            std::cout << "Windows detected, using Python method..." << std::endl;
+            // Windows: сначала пробуем PowerShell, потом Python
+            if (convert_csv_to_xlsx_powershell(csv_file)) {
+                std::cout << "Successfully converted using PowerShell" << std::endl;
+                return true;
+            }
+            
+            std::cout << "PowerShell failed, trying Python..." << std::endl;
             if (python_available()) {
                 if (convert_csv_to_xlsx_python(csv_file)) {
                     std::cout << "Successfully converted using Python" << std::endl;
@@ -497,12 +520,10 @@ public:
                 }
             }
             
-            std::cerr << "Error: Python not available for conversion!" << std::endl;
-            std::cerr << "Please install Python with pandas: pip install pandas openpyxl" << std::endl;
+            std::cerr << "Error: Neither PowerShell nor Python available for conversion!" << std::endl;
             return false;
         #else
             // Linux/Unix: сначала пробуем LibreOffice, потом Python
-            std::cout << "Linux/Unix detected, trying LibreOffice..." << std::endl;
             if (libreoffice_available()) {
                 if (convert_csv_to_xlsx_libreoffice(csv_file)) {
                     std::cout << "Successfully converted using LibreOffice" << std::endl;
