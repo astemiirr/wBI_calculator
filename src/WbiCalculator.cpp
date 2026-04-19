@@ -81,7 +81,7 @@ void WbiCalculator::read_countries_from_quotas_csv(const std::string &filename)
         std::string country_name, quota_str;
 
         // Читаем два поля, разделенные запятой
-        if (std::getline(ss, country_name, ',') && std::getline(ss, quota_str, ','))
+        if (std::getline(ss, country_name, ';') && std::getline(ss, quota_str, ';'))
         {
             // Убираем возможные пробелы в начале и конце
             country_name.erase(0, country_name.find_first_not_of(" \t"));
@@ -134,9 +134,9 @@ void WbiCalculator::read_edges_csv(const std::string &filename)
 
         // Читаем три столбца: from_country, to_country, weight
         // Читаем три поля, разделенные ЗАПЯТОЙ
-        if (std::getline(ss, from_country, ',') &&
-            std::getline(ss, to_country, ',') &&
-            std::getline(ss, weight_str, ','))
+        if (std::getline(ss, from_country, ';') &&
+            std::getline(ss, to_country, ';') &&
+            std::getline(ss, weight_str, ';'))
         {
 
             // Убираем возможные пробелы
@@ -205,7 +205,7 @@ void WbiCalculator::read_quotas_csv(const std::string &filename)
         std::string country_name, quota_str;
 
         // Читаем два поля, разделенные ЗАПЯТОЙ
-        if (std::getline(ss, country_name, ',') && std::getline(ss, quota_str, ','))
+        if (std::getline(ss, country_name, ';') && std::getline(ss, quota_str, ';'))
         {
             // Убираем возможные пробелы
             country_name.erase(0, country_name.find_first_not_of(" \t"));
@@ -263,8 +263,8 @@ void WbiCalculator::write_results_csv(const std::string &filename)
     // Данные - используем исходные названия стран
     for (ll i = 0; i < N; ++i)
     {
-        file << country_names[i] << ","
-             << std::fixed << std::setprecision(6) << wBI_1[i] << ","
+        file << country_names[i] << ";"
+             << std::fixed << std::setprecision(6) << wBI_1[i] << ";"
              << std::fixed << std::setprecision(6) << wBI_2[i] << "\n";
     }
 
