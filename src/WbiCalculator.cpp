@@ -1,8 +1,16 @@
 #include "WbiCalculator.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <cmath>
+#include <iomanip>
+
 // Функция для вычисления условной суммы группы
-ll WbiCalculator::group_cond_sum(ll group_sum, ll node)
+ll WbiCalculator::group_cond_sum(ll group_sum, ll node, const std::vector<ll> &quota)
 {
+
     // ll group_size = group.size();
     // ll sum = 0;
     // for (ll i = 0; i < group_size; ++i) {
@@ -18,19 +26,26 @@ ll WbiCalculator::group_cond_sum(ll group_sum, ll node)
 }
 
 // Рекурсивная функция для генерации комбинаций
-void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, ll option)
+void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, ll option,
+                                const std::vector<std::vector<ll>> &in_weight,
+                                const std::vector<std::vector<ll>> &in_nodes,
+                                const std::vector<ll> &quota,
+                                const std::vector<ll> &in_edges_sum,
+                                ll TOTAL_SUM,
+                                std::vector<double> &wBI_1,
+                                std::vector<double> &wBI_2)
 {
     if (curr == count)
     {
         if (option == 1)
         {
-            wBI_1[node] += double(group_cond_sum(group_sum, node)) / in_edges_sum[node];
-            wBI_2[node] += double(group_cond_sum(group_sum, node)) / TOTAL_SUM;
+            wBI_1[node] += double(group_cond_sum(group_sum, node, quota)) / in_edges_sum[node];
+            wBI_2[node] += double(group_cond_sum(group_sum, node, quota)) / TOTAL_SUM;
         }
         else
         {
-            wBI_1[node] += double(group_cond_sum(group_sum, node)) / in_edges_sum[node];
-            wBI_2[node] += double(group_cond_sum(group_sum, node)) / TOTAL_SUM;
+            wBI_1[node] += double(group_cond_sum(group_sum, node, quota)) / in_edges_sum[node];
+            wBI_2[node] += double(group_cond_sum(group_sum, node, quota)) / TOTAL_SUM;
         }
 
         return;
@@ -45,7 +60,8 @@ void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll
     for (ll i = last_ind + 1; i < in_count; ++i)
     {
         group_sum += in_weight[node][in_nodes[node][i]];
-        combination(curr + 1, i, count, group_sum, node, option);
+        combination(curr + 1, i, count, group_sum, node, option,
+                    in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
         group_sum -= in_weight[node][in_nodes[node][i]];
     }
 
@@ -53,193 +69,28 @@ void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll
 }
 
 // Функция для вычисления wBI_1 и wBI_2 для одного узла
-void WbiCalculator::calculate_wBI(ll node)
+void WbiCalculator::calculate_wBI(ll node, int K,
+                                  const std::vector<std::vector<ll>> &in_weight,
+                                  const std::vector<std::vector<ll>> &in_nodes,
+                                  const std::vector<ll> &quota,
+                                  const std::vector<ll> &in_edges_sum,
+                                  ll TOTAL_SUM,
+                                  std::vector<double> &wBI_1,
+                                  std::vector<double> &wBI_2)
 {
     for (ll i = 1; i <= K; ++i)
     {
         ll group_sum = 0;
-        combination(0, -1, i, group_sum, node, 1);
+        combination(0, -1, i, group_sum, node, 1,
+                    in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
     }
 }
-
-// Функция для чтения списка стран из квот
-void WbiCalculator::read_countries_from_quotas_csv(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    country_names.clear();
-
-    // // Читаем заголовок (пропускаем)
-    // if (std::getline(file, line)) {
-    //     // Пропускаем заголовок
-    // }
-
-    while (std::getline(file, line))
-    {
-        std::stringstream ss(line);
-        std::string country_name, quota_str;
-
-        // Читаем два поля, разделенные запятой
-        if (std::getline(ss, country_name, ';') && std::getline(ss, quota_str, ';'))
-        {
-            // Убираем возможные пробелы в начале и конце
-            country_name.erase(0, country_name.find_first_not_of(" \t"));
-            country_name.erase(country_name.find_last_not_of(" \t") + 1);
-
-            // std::cout << "Country: '" << country_name << "'" << std::endl;
-            country_names.push_back(country_name);
-        }
-    }
-
-    file.close();
-
-    // Сортируем страны лексикографически
-    std::sort(country_names.begin(), country_names.end());
-
-    // Создаем mapping: название страны -> индекс
-    country_to_index.clear();
-    for (ll i = 0; i < country_names.size(); ++i)
-    {
-        country_to_index[country_names[i]] = i;
-    }
-
-    N = country_names.size();
-    std::cout << std::endl;
-    std::cout << "Found " << N << " countries" << std::endl;
-    std::cout << "-------------------------" << std::endl
-              << std::endl;
-}
-
-// Функция для чтения рёбер из CSV
-void WbiCalculator::read_edges_csv(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    // Инициализируем структуры данных
-    in_weight.assign(N, std::vector<ll>(N, 0));
-    in_nodes.resize(N);
-
-    // Читаем заголовок (пропускаем)
-    if (std::getline(file, line))
-    {
-        // Пропускаем заголовок
-    }
-
-    while (std::getline(file, line))
-    {
-        std::stringstream ss(line);
-        std::string from_country, to_country, weight_str;
-
-        // Читаем три столбца: from_country, to_country, weight
-        // Читаем три поля, разделенные ЗАПЯТОЙ
-        if (std::getline(ss, from_country, ';') &&
-            std::getline(ss, to_country, ';') &&
-            std::getline(ss, weight_str, ';'))
-        {
-
-            // Убираем возможные пробелы
-            from_country.erase(0, from_country.find_first_not_of(" \t"));
-            from_country.erase(from_country.find_last_not_of(" \t") + 1);
-            to_country.erase(0, to_country.find_first_not_of(" \t"));
-            to_country.erase(to_country.find_last_not_of(" \t") + 1);
-            weight_str.erase(0, weight_str.find_first_not_of(" \t"));
-            weight_str.erase(weight_str.find_last_not_of(" \t") + 1);
-
-            // Проверяем, что страны есть в нашем списке
-            if (country_to_index.count(from_country) && country_to_index.count(to_country))
-            {
-                ll from_idx = country_to_index[from_country];
-                ll to_idx = country_to_index[to_country];
-                ll weight = std::stoll(weight_str);
-
-                in_weight[to_idx][from_idx] = weight;
-                in_nodes[to_idx].push_back(from_idx);
-
-                // std::cout << "Edge: " << from_country << "(" << from_idx << ") -> "
-                //     << to_country << "(" << to_idx << ") = " << weight << std::endl;
-            }
-            else
-            {
-                std::cout << "Warning: Unknown country in edge: " << from_country << " -> " << to_country << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "Warning: Could not parse line: " << line << std::endl;
-        }
-    }
-
-    // Нахождение узла с максимальным количеством входящих рёбер
-    ll mx_in_nodes = 0;
-    for (auto &el : in_nodes)
-    {
-        mx_in_nodes = fmax(mx_in_nodes, el.size()); // ll -> double
-    }
-    std::cout << std::endl
-              << "Maximum number of incoming edges = " << mx_in_nodes << std::endl;
-    // (Фрагмент кода для оценки времени вычисления)
-    std::cout << "-------------------------" << std::endl
-              << std::endl;
-
-    file.close();
-}
-
-// Функция для чтения квот из CSV
-void WbiCalculator::read_quotas_csv(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    quota.assign(N, 0);
-
-    // // Читаем заголовок (пропускаем)
-    // if (std::getline(file, line)) {
-    //     std::cout << "Quotas header: " << line << std::endl;
-    // }
-
-    while (std::getline(file, line))
-    {
-        std::stringstream ss(line);
-        std::string country_name, quota_str;
-
-        // Читаем два поля, разделенные ЗАПЯТОЙ
-        if (std::getline(ss, country_name, ';') && std::getline(ss, quota_str, ';'))
-        {
-            // Убираем возможные пробелы
-            country_name.erase(0, country_name.find_first_not_of(" \t"));
-            country_name.erase(country_name.find_last_not_of(" \t") + 1);
-            quota_str.erase(0, quota_str.find_first_not_of(" \t"));
-            quota_str.erase(quota_str.find_last_not_of(" \t") + 1);
-
-            if (country_to_index.count(country_name))
-            {
-                ll node_idx = country_to_index[country_name];
-                quota[node_idx] = std::stoll(quota_str);
-                // std::cout << "Quota: " << country_name << "(" << node_idx << ") = " << quota[node_idx] << std::endl;
-            }
-            else
-            {
-                std::cout << "Warning: Unknown country in quotas: " << country_name << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "Warning: Could not parse quotas line: " << line << std::endl;
-        }
-    }
-
-    std::cout << "-------------------------" << std::endl
-              << std::endl;
-
-    file.close();
-}
-
 // Функция для вычисления сумм
-void WbiCalculator::calculate_sums()
+ll WbiCalculator::calculate_sums(int N,
+                                 const std::vector<std::vector<ll>> &in_weight,
+                                 std::vector<ll> &in_edges_sum)
 {
-    TOTAL_SUM = 0;
+    ll sum = 0;
     in_edges_sum.assign(N, 0);
 
     for (ll i = 0; i < N; ++i)
@@ -247,54 +98,34 @@ void WbiCalculator::calculate_sums()
         for (ll j = 0; j < N; ++j)
         {
             in_edges_sum[i] += in_weight[i][j];
-            TOTAL_SUM += in_weight[i][j];
+            sum += in_weight[i][j];
         }
     }
-}
-
-// Функция для записи результатов в CSV
-void WbiCalculator::write_results_csv(const std::string &filename)
-{
-    std::ofstream file(filename);
-
-    // Заголовки
-    file << "Country,wBI_1,wBI_2\n";
-
-    // Данные - используем исходные названия стран
-    for (ll i = 0; i < N; ++i)
-    {
-        file << country_names[i] << ";"
-             << std::fixed << std::setprecision(6) << wBI_1[i] << ";"
-             << std::fixed << std::setprecision(6) << wBI_2[i] << "\n";
-    }
-
-    file.close();
+    return sum;
 }
 
 // Функция для выполнения вычислений
-void WbiCalculator::perform_calculations()
+WbiResult WbiCalculator::perform_calculations(const GraphData &graph)
 {
-    // Шаг 2.1: Читаем список стран и создаем mapping
-    std::cout << "Reading countries from quotas.csv..." << std::endl
-              << std::endl;
-    read_countries_from_quotas_csv("quotas.csv");
+    // Переменные для вычислений
+    const std::vector<std::vector<ll>> &in_weight = graph.get_in_weight();
+    const std::vector<std::vector<ll>> &in_nodes = graph.get_in_nodes();
+    const std::vector<ll> &quota = graph.get_quota();
+    std::vector<ll> in_edges_sum;
+    std::vector<double> wBI_1;
+    std::vector<double> wBI_2;
+    const std::vector<std::string> country_names = graph.get_country_names();
+    int K = graph.get_K();
 
-    // Шаг 2.2: Читаем данные из CSV
-    std::cout << "Reading edges from network.csv..." << std::endl;
-    read_edges_csv("network.csv");
+    int N = graph.size();
 
-    std::cout << "Reading quotas from quotas.csv..." << std::endl;
-    read_quotas_csv("quotas.csv");
-
-    // Шаг 2.3: Вычисляем суммы
-    std::cout << "Calculating sums..." << std::endl;
-    calculate_sums();
+    ll TOTAL_SUM = calculate_sums(N, in_weight, in_edges_sum);
 
     // Инициализируем результаты
     wBI_1.assign(N, 0.0);
     wBI_2.assign(N, 0.0);
 
-    // Шаг 2.4 Параллельные вычисления
+    // Параллельные вычисления
     auto start_time = std::chrono::high_resolution_clock::now();
     std::cout << "Calculating wBI_1 and wBI_2...\n"
               << std::endl;
@@ -303,7 +134,7 @@ void WbiCalculator::perform_calculations()
     {
         // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
         // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
-        calculate_wBI(i);
+        calculate_wBI(i, K, in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
@@ -313,7 +144,5 @@ void WbiCalculator::perform_calculations()
     std::cout << "Время: " << parallel_duration.count() << " мс" << "\n";
     std::cout << "\n";
 
-    // Шаг 2.5: Записываем результаты в CSV
-    std::cout << "Writing results to results.csv..." << std::endl;
-    write_results_csv("results.csv");
+    return WbiResult(wBI_1, wBI_2, country_names);
 }
