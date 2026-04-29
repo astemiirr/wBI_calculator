@@ -26,12 +26,12 @@ public:
                         int N,
                         std::vector<std::vector<ll>> &in_weight,
                         std::vector<std::vector<ll>> &in_nodes,
-                        std::map<std::string, ll> &country_to_index);
+                        std::map<std::string, size_t> &country_to_index);
 
     // Функция для чтения квот из CSV
     void read_quotas_csv(const std::string &filename,
                          std::vector<std::string> &country_names,
-                         std::map<std::string, ll> &country_to_index,
+                         std::map<std::string, size_t> &country_to_index,
                          std::vector<ll> &quota);
 
     GraphData load_graph(const std::string &quotas_file, const std::string &edges_file, ll K);

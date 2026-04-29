@@ -26,9 +26,8 @@ private:
     std::vector<ll> quota;                  // квота для каждой вершины
 
     // Векторы для работы со странами
-    std::vector<std::string> country_names;     // country_names[i] = название страны с индексом i
-    std::map<std::string, ll> country_to_index; // country_to_index["Russia"] = индекс
-    // Надо ll поменять на size_t !#
+    std::vector<std::string> country_names;         // country_names[i] = название страны с индексом i
+    std::map<std::string, size_t> country_to_index; // country_to_index["Russia"] = индекс
 
     ll K;
 
@@ -40,12 +39,12 @@ public:
         const std::vector<std::vector<ll>> &in_nodes,
         const std::vector<ll> &quota,
         const std::vector<std::string> &country_names,
-        const std::map<std::string, ll> &country_to_index) : K(k),
-                                                             in_weight(in_weight),
-                                                             in_nodes(in_nodes),
-                                                             quota(quota),
-                                                             country_names(country_names),
-                                                             country_to_index(country_to_index)
+        const std::map<std::string, size_t> &country_to_index) : K(k),
+                                                                 in_weight(in_weight),
+                                                                 in_nodes(in_nodes),
+                                                                 quota(quota),
+                                                                 country_names(country_names),
+                                                                 country_to_index(country_to_index)
     {
         if (in_weight.size() != in_nodes.size() ||
             in_weight.size() != country_names.size() ||

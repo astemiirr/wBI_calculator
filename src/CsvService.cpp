@@ -14,7 +14,7 @@ void CsvService::read_edges_csv(const std::string &filename,
                                 int N,
                                 std::vector<std::vector<ll>> &in_weight,
                                 std::vector<std::vector<ll>> &in_nodes,
-                                std::map<std::string, ll> &country_to_index)
+                                std::map<std::string, size_t> &country_to_index)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -96,7 +96,7 @@ void CsvService::read_edges_csv(const std::string &filename,
 // Функция для чтения квот из CSV
 void CsvService::read_quotas_csv(const std::string &filename,
                                  std::vector<std::string> &country_names,
-                                 std::map<std::string, ll> &country_to_index,
+                                 std::map<std::string, size_t> &country_to_index,
                                  std::vector<ll> &quota)
 {
     std::ifstream file(filename);
@@ -150,7 +150,7 @@ void CsvService::read_quotas_csv(const std::string &filename,
 GraphData CsvService::load_graph(const std::string &quotas_file, const std::string &edges_file, ll K)
 {
     std::vector<std::string> country_names;
-    std::map<std::string, ll> country_to_index;
+    std::map<std::string, size_t> country_to_index;
     std::vector<ll> quota;
 
     read_quotas_csv(quotas_file, country_names, country_to_index, quota);
