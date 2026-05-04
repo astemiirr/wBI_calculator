@@ -3,8 +3,14 @@
 #include "CsvService.h"
 #include "GraphData.h"
 #include "WbiResult.h"
+#include "IFileConverter.h"
+#include "PowerShellConverter.h"
+#include "LibreOfficeConverter.h"
+#include "PythonConverter.h"
 
 #include <iostream>
+#include <vector>
+#include <memory>
 
 int main(int argc, char *argv[])
 {
@@ -16,8 +22,17 @@ int main(int argc, char *argv[])
 
     int K = std::stoi(argv[1]);
 
+    std::vector<std::unique_ptr<IFileConverter>> converters;
+
+#ifdef _WIN32
+    converters.push_back(std::make_unique<PowerShellConverter>());
+#endif
+
+    converters.push_back(std::make_unique<PythonConverter>());
+    converters.push_back(std::make_unique<LibreOfficeConverter>());
+
     WbiCalculator calculator;
-    FileProcessor fileProcessor;
+    FileProcessor fileProcessor(std::move(converters));
     CsvService csv;
 
     // Конвертируем XLSX в CSV
