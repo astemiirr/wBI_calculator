@@ -8,7 +8,7 @@
 
 #include <stdexcept>
 
-typedef long long ll;
+typedef double db;
 
 class graph_data_error : public std::runtime_error
 {
@@ -21,23 +21,23 @@ class GraphData
 {
 private:
     // Переменные для вычислений
-    std::vector<std::vector<ll>> in_weight; // in_weight[x][y] вес ребра x <-- y
-    std::vector<std::vector<ll>> in_nodes;  // in_nodes[x] список ребер входящие в x
-    std::vector<ll> quota;                  // квота для каждой вершины
+    std::vector<std::vector<db>> in_weight;    // in_weight[x][y] вес ребра x <-- y
+    std::vector<std::vector<size_t>> in_nodes; // in_nodes[x] список ребер входящие в x
+    std::vector<db> quota;                     // квота для каждой вершины
 
     // Векторы для работы со странами
     std::vector<std::string> country_names;         // country_names[i] = название страны с индексом i
     std::map<std::string, size_t> country_to_index; // country_to_index["Russia"] = индекс
 
-    ll K;
+    size_t K;
 
 public:
     GraphData() = default;
     GraphData(
-        ll k,
-        const std::vector<std::vector<ll>> &in_weight,
-        const std::vector<std::vector<ll>> &in_nodes,
-        const std::vector<ll> &quota,
+        size_t k,
+        const std::vector<std::vector<db>> &in_weight,
+        const std::vector<std::vector<size_t>> &in_nodes,
+        const std::vector<db> &quota,
         const std::vector<std::string> &country_names,
         const std::map<std::string, size_t> &country_to_index) : K(k),
                                                                  in_weight(in_weight),
@@ -60,22 +60,22 @@ public:
         return in_weight.size();
     }
 
-    int get_K() const
+    size_t get_K() const
     {
         return K;
     }
 
-    const std::vector<std::vector<ll>> &get_in_weight() const
+    const std::vector<std::vector<db>> &get_in_weight() const
     {
         return in_weight;
     }
 
-    const std::vector<std::vector<ll>> &get_in_nodes() const
+    const std::vector<std::vector<size_t>> &get_in_nodes() const
     {
         return in_nodes;
     }
 
-    const std::vector<ll> &get_quota() const
+    const std::vector<db> &get_quota() const
     {
         return quota;
     }

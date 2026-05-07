@@ -10,39 +10,40 @@
 #include <chrono>
 #include <omp.h>
 
-typedef long long ll;
+typedef double db;
 
 // Класс для вычисления индексов wBI
 class WbiCalculator
 {
 private:
     // Функция для вычисления условной суммы группы
-    ll group_cond_sum(ll group_sum, ll node, const std::vector<ll> &quota);
+    db group_cond_sum(db group_sum, size_t node, const std::vector<db> &quota);
 
     // Рекурсивная функция для генерации комбинаций
-    void combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, int option,
-                     const std::vector<std::vector<ll>> &in_weight,
-                     const std::vector<std::vector<ll>> &in_nodes,
-                     const std::vector<ll> &quota,
-                     const std::vector<ll> &in_edges_sum,
-                     ll TOTAL_SUM,
+    void combination(size_t curr, size_t last_ind, size_t count, db group_sum, size_t node,
+                     int option,
+                     const std::vector<std::vector<db>> &in_weight,
+                     const std::vector<std::vector<size_t>> &in_nodes,
+                     const std::vector<db> &quota,
+                     const std::vector<db> &in_edges_sum,
+                     db TOTAL_SUM,
                      std::vector<double> &wBI_1,
                      std::vector<double> &wBI_2);
 
     // Функция для вычисления wBI_1 и wBI_2 для одного узла
-    void calculate_wBI(ll node, int K, int option,
-                       const std::vector<std::vector<ll>> &in_weight,
-                       const std::vector<std::vector<ll>> &in_nodes,
-                       const std::vector<ll> &quota,
-                       const std::vector<ll> &in_edges_sum,
-                       ll TOTAL_SUM,
-                       std::vector<double> &wBI_1,
-                       std::vector<double> &wBI_2);
+    void calculate_wBI(size_t node, size_t K, int option,
+                       const std::vector<std::vector<db>> &in_weight,
+                       const std::vector<std::vector<size_t>> &in_nodes,
+                       const std::vector<db> &quota,
+                       const std::vector<db> &in_edges_sum,
+                       db TOTAL_SUM,
+                       std::vector<db> &wBI_1,
+                       std::vector<db> &wBI_2);
 
     // Функция для вычисления сумм
-    ll calculate_sums(int N,
-                      const std::vector<std::vector<ll>> &in_weight,
-                      std::vector<ll> &in_edges_sum);
+    db calculate_sums(size_t N,
+                      const std::vector<std::vector<db>> &in_weight,
+                      std::vector<db> &in_edges_sum);
 
 public:
     WbiCalculator() = default;
