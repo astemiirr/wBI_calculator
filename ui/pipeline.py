@@ -77,30 +77,37 @@ class Pipeline:
 
         log("Runnig linear version")
 
-        self.runner.run(
+        linear_result = self.runner.run(
             exe_path=settings.cpp,
             quotas_csv=quotas_csv,
             network_csv=network_csv,
             output_csv=linear_csv,
             k=settings.k,
-            mode=settings.mode,
-            metric="linear",
+            mode="linear",
+            metric=settings.metric,
             log=log,
         )
 
         log("Runnig parallel version")
 
-        self.runner.run(
+        parallel_result = self.runner.run(
             exe_path=settings.cpp,
             quotas_csv=quotas_csv,
             network_csv=network_csv,
-            output_csv=linear_csv,
+            output_csv=parallel_csv,
             k=settings.k,
-            mode=settings.mode,
-            metric="parallel",
+            mode="parallel",
+            metric=settings.metric,
             log=log,
         )
 
         log("Creating comparison xlsx")
-        # self.converter.csv_to_xlsx(linear_csv, settings.output_xlsx) надо исправить!
-        self.converter.csv_to_xlsx(parallel_csv, settings.output_xlsx)
+        self.converter.compare_csv_to_xlsx(
+            linear_csv=linear_csv,
+            parallel_csv=parallel_csv,
+            output_xlsx=settings.output_xlsx,
+            linear_seconds=linear_result.seconds,
+            parallel_seconds=parallel_result.seconds,
+            k=settings.k,
+            metric=settings.metric,
+        )
