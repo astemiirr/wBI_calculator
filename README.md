@@ -1,142 +1,149 @@
 # Weighted Bundle Index Calculator
 
-Кроссплатформенная программа для вычисления взвешенных бандельных индексов.
+## Что это за программа
 
-Поддерживает:
+Weighted Bundle Index Calculator — программа для вычисления взвешенных бандельных индексов графа.
 
-* Windows
-* Linux / Ubuntu
+Проект состоит из двух частей:
 
-Автоматически:
-
-* конвертирует `.xlsx` <--> `.csv`
-* вычисляет индексы
-* сохраняет результат в `.xlsx`
+- **C++** — вычислительное ядро, считает индексы по CSV-файлам.
+- **Python UI** — графическая оболочка, которая выбирает файлы, конвертирует `.xlsx` в `.csv`, запускает C++ и сохраняет результат обратно в `.xlsx`.
 
 ---
 
-# Требования
+## Требования
 
-## Общие
+Для сборки C++:
 
-* CMake >= 3.15
-* C++ компилятор с поддержкой C++17
-* OpenMP
+- CMake >= 3.15
+- C++17
+- OpenMP
+- компилятор C++: MinGW / MSVC / g++
+- Ninja или другой генератор сборки
 
-## Для работы с Excel
+Для Python UI:
 
-**Windows:**
+- Python >= 3.10
+- openpyxl
+- pandas
+- pyinstaller
 
-* Python + pandas + openpyxl
-  или
-* Microsoft Excel (через PowerShell)
+Установка Python-зависимостей:
 
-**Linux:**
-
-* LibreOffice
-  или
-* Python + pandas + openpyxl
+```bash
+cd ui
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
 ---
 
-# Сборка проекта
+## Как собрать C++ часть
 
-## Windows (MinGW + Ninja)
+### Windows
 
-### 1. Установить:
-
-* GCC (например через WinLibs)
-* CMake
-* Ninja
-
-### 2. Добавить в PATH:
-
-```
-C:\...\gcc\bin
-C:\...\ninja
-C:\...\cmake\bin
-```
-
-### 3. Сборка:
-
-```
+```bash
+cd cpp
 mkdir build
 cd build
 cmake .. -G "Ninja"
 cmake --build .
 ```
 
----
+После сборки скопируйте `wbi_cpp.exe` в папку:
 
-## Linux / Ubuntu
-
-### 1. Установить зависимости:
-
-```
-sudo apt update
-sudo apt install g++ cmake ninja-build libomp-dev
-```
-
-### 2. Сборка:
-
-```
-mkdir build
-cd build
-cmake ..
-cmake --build .
+```text
+ui/bin/wbi_cpp.exe
 ```
 
 ---
 
-# Запуск
+## Как запустить из исходников
 
-Перейдите в папку `build`:
-
-```
-./wbi 3
-```
-
-или на Windows:
-
-```
-wbi.exe 3
+```bash
+cd ui
+.venv\Scripts\activate
+python main.py
 ```
 
-где:
+В окне программы нужно выбрать:
 
-* `3` — параметр K
+- C++ executable;
+- `quotas.xlsx`;
+- `network.xlsx`;
+- путь для сохранения результата + имя сохраняемого файла;
+- параметр `K`;
+- режим вычисления;
+- меру центральности.
 
 ---
 
-# Формат входных файлов
+## Как собрать релиз
 
-## quotas.xlsx
+Из папки `ui`:
+
+```bash
+pyinstaller --noconsole --onedir --name WBI-UI --add-binary "bin\wbi_cpp.exe;bin" main.py
+```
+
+Готовая программа появится в папке:
+
+```text
+ui/dist/WBI-UI/
+```
+
+---
+
+## Возможности
+
+Программа умеет:
+
+- загружать два входных файла:
+  - `quotas.xlsx`;
+  - `network.xlsx`;
+- автоматически конвертировать `.xlsx` в `.csv`;
+- запускать C++ вычисления;
+- получать результат в `.csv`;
+- сохранять итоговый результат в `.xlsx`;
+- удалять временные `.csv` файлы;
+- выбирать режим вычисления:
+  - `linear`;
+  - `parallel`;
+  - `compare`;
+- выбирать меру центральности:
+  - `wbi1`;
+  - `wbi2`;
+  - `both`.
+
+---
+
+## Формат входных файлов
+
+### `quotas.xlsx`
 
 | Country | Quota |
-| ------- | ----- |
-| USA     | 100   |
-| UK      | 50    |
+|---|---|
+| USA | 100 |
+| UK | 50 |
 
----
-
-## network.xlsx
+### `network.xlsx`
 
 | from | to | weight |
-| ---- | -- | ------ |
-| USA  | UK | 10     |
+|---|---|---|
+| USA | UK | 10 |
+| UK | Germany | 15 |
 
 ---
 
-# Результат
+## Результат
 
-Создаётся файл:
+На выходе создаётся `.xlsx` файл с результатами вычислений.
 
+Пример колонок:
+
+```text
+Country
+wBI_1
+wBI_2
 ```
-results.xlsx
-```
-
-С колонками:
-
-* Country
-* Weighted Bundle Index 1
-* Weighted Bundle Index 2
