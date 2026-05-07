@@ -29,18 +29,15 @@ void CsvService::read_edges_csv(const std::string &filename,
     in_nodes.resize(N);
 
     // Читаем заголовок (пропускаем)
-    if (std::getline(file, line))
-    {
-        // Пропускаем заголовок
-    }
+    std::getline(file, line);
 
     while (std::getline(file, line))
     {
         std::stringstream ss(line);
         std::string from_country, to_country, weight_str;
 
-        // Читаем три столбца: from_country, to_country, weight
-        // Читаем три поля, разделенные ЗАПЯТОЙ
+        // Читаем три столбца: from_country; to_country; weight
+        // Читаем три поля, разделенные ;
 
         if (std::getline(ss, from_country, ';') &&
             std::getline(ss, to_country, ';') &&
@@ -64,17 +61,15 @@ void CsvService::read_edges_csv(const std::string &filename,
                 in_weight[to_idx][from_idx] = weight;
                 in_nodes[to_idx].push_back(from_idx);
             }
-            // std::cout << "Edge: " << from_country << "(" << from_idx << ") -> "
-            //     << to_country << "(" << to_idx << ") = " << weight << std::endl;
 
             else
             {
-                std::cout << "Warning: Unknown country in edge: " << from_country << " -> " << to_country << std::endl;
+                throw csv_service_error("Warning: Unknown country in edge: " + from_country + " -> " + to_country);
             }
         }
         else
         {
-            std::cout << "Warning: Could not parse line: " << line << std::endl;
+            throw csv_service_error("Warning: Could not parse line: " + line);
         }
     }
 
@@ -86,7 +81,6 @@ void CsvService::read_edges_csv(const std::string &filename,
     }
     std::cout << std::endl
               << "Maximum number of incoming edges = " << mx_in_nodes << std::endl;
-    // (Фрагмент кода для оценки времени вычисления)
     std::cout << "-------------------------" << std::endl
               << std::endl;
 
@@ -108,16 +102,14 @@ void CsvService::read_quotas_csv(const std::string &filename,
     std::string line;
 
     // // Читаем заголовок (пропускаем)
-    // if (std::getline(file, line)) {
-    //     std::cout << "Quotas header: " << line << std::endl;
-    // }
+    std::getline(file, line);
 
     while (std::getline(file, line))
     {
         std::stringstream ss(line);
         std::string country_name, quota_str;
 
-        // Читаем два поля, разделенные ЗАПЯТОЙ
+        // Читаем два поля, разделенные ;
         if (std::getline(ss, country_name, ';') && std::getline(ss, quota_str, ';'))
         {
             // Убираем возможные пробелы
