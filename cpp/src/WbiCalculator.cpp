@@ -26,7 +26,7 @@ ll WbiCalculator::group_cond_sum(ll group_sum, ll node, const std::vector<ll> &q
 }
 
 // Рекурсивная функция для генерации комбинаций
-void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, ll option,
+void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, int option,
                                 const std::vector<std::vector<ll>> &in_weight,
                                 const std::vector<std::vector<ll>> &in_nodes,
                                 const std::vector<ll> &quota,
@@ -40,6 +40,9 @@ void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll
         if (option == 1)
         {
             wBI_1[node] += double(group_cond_sum(group_sum, node, quota)) / in_edges_sum[node];
+        }
+        else if (option == 2)
+        {
             wBI_2[node] += double(group_cond_sum(group_sum, node, quota)) / TOTAL_SUM;
         }
         else
@@ -69,7 +72,7 @@ void WbiCalculator::combination(ll curr, ll last_ind, ll count, ll group_sum, ll
 }
 
 // Функция для вычисления wBI_1 и wBI_2 для одного узла
-void WbiCalculator::calculate_wBI(ll node, int K,
+void WbiCalculator::calculate_wBI(ll node, int K, int option,
                                   const std::vector<std::vector<ll>> &in_weight,
                                   const std::vector<std::vector<ll>> &in_nodes,
                                   const std::vector<ll> &quota,
@@ -81,7 +84,7 @@ void WbiCalculator::calculate_wBI(ll node, int K,
     for (ll i = 1; i <= K; ++i)
     {
         ll group_sum = 0;
-        combination(0, -1, i, group_sum, node, 1,
+        combination(0, -1, i, group_sum, node, option,
                     in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
     }
 }
@@ -105,7 +108,8 @@ ll WbiCalculator::calculate_sums(int N,
 }
 
 // Функция для выполнения вычислений
-WbiResult WbiCalculator::perform_calculations(const GraphData &graph)
+WbiResult WbiCalculator::perform_calculations(
+    const GraphData &graph, const std::string &mode, const std::string &metric)
 {
     // Переменные для вычислений
     const std::vector<std::vector<ll>> &in_weight = graph.get_in_weight();
@@ -119,6 +123,24 @@ WbiResult WbiCalculator::perform_calculations(const GraphData &graph)
 
     int N = graph.size();
 
+    int option;
+    if (metric == "wbi1")
+    {
+        option = 1;
+    }
+    else if (metric == "wbi2")
+    {
+        option = 2;
+    }
+    else if (metric == "both")
+    {
+        option = 3;
+    }
+    else
+    {
+        throw std::invalid_argument("Metric must be \"wbi1\", \"wbi2\" or \"both\"");
+    }
+
     ll TOTAL_SUM = calculate_sums(N, in_weight, in_edges_sum);
 
     // Инициализируем результаты
@@ -129,12 +151,29 @@ WbiResult WbiCalculator::perform_calculations(const GraphData &graph)
     auto start_time = std::chrono::high_resolution_clock::now();
     std::cout << "Calculating wBI_1 and wBI_2...\n"
               << std::endl;
-#pragma omp parallel for
-    for (ll i = 0; i < N; ++i)
+
+    if (mode == "parallel")
     {
-        // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
-        // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
-        calculate_wBI(i, K, in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
+#pragma omp parallel for
+        for (ll i = 0; i < N; ++i)
+        {
+            // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
+            // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
+            calculate_wBI(i, K, option, in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
+        }
+    }
+    else if (mode == "linear")
+    {
+        for (ll i = 0; i < N; ++i)
+        {
+            // std::cout << "Thread " << omp_get_thread_num() << " processing vertex " << i << std::endl;
+            // std::cout << "Calculating for " << country_names[i] << "..." << std::endl;
+            calculate_wBI(i, K, option, in_weight, in_nodes, quota, in_edges_sum, TOTAL_SUM, wBI_1, wBI_2);
+        }
+    }
+    else
+    {
+        throw std::invalid_argument("mode must be \"parallel\" or \"linear\"");
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

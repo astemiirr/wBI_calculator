@@ -20,7 +20,7 @@ private:
     ll group_cond_sum(ll group_sum, ll node, const std::vector<ll> &quota);
 
     // Рекурсивная функция для генерации комбинаций
-    void combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, ll option,
+    void combination(ll curr, ll last_ind, ll count, ll group_sum, ll node, int option,
                      const std::vector<std::vector<ll>> &in_weight,
                      const std::vector<std::vector<ll>> &in_nodes,
                      const std::vector<ll> &quota,
@@ -30,7 +30,7 @@ private:
                      std::vector<double> &wBI_2);
 
     // Функция для вычисления wBI_1 и wBI_2 для одного узла
-    void calculate_wBI(ll node, int K,
+    void calculate_wBI(ll node, int K, int option,
                        const std::vector<std::vector<ll>> &in_weight,
                        const std::vector<std::vector<ll>> &in_nodes,
                        const std::vector<ll> &quota,
@@ -48,7 +48,7 @@ public:
     WbiCalculator() = default;
 
     // Функция для выполнения вычислений
-    WbiResult perform_calculations(const GraphData &graph);
+    WbiResult perform_calculations(const GraphData &graph, const std::string &mode, const std::string &metric);
 };
 
 #endif

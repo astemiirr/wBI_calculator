@@ -169,13 +169,13 @@ void CsvService::write_results_csv(const std::string &filename, const WbiResult 
     }
 
     // Заголовки
-    file << "Country;wBI_1;wBI_2\n";
+    file << "Country,wBI_1,wBI_2\n";
 
     // Данные - используем исходные названия стран
     for (ll i = 0; i < country_names.size(); ++i)
     {
-        file << country_names[i] << ";"
-             << std::fixed << std::setprecision(6) << wBI_1[i] << ";"
+        file << country_names[i] << ","
+             << std::fixed << std::setprecision(6) << wBI_1[i] << ","
              << std::fixed << std::setprecision(6) << wBI_2[i] << "\n";
     }
 
