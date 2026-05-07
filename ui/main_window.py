@@ -7,6 +7,8 @@ from pathlib import Path
 from settings import RunSettings
 from pipeline import Pipeline
 
+import paths
+
 
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -19,7 +21,7 @@ class MainWindow(tk.Tk):
 
         self.pipeline = Pipeline()
 
-        self.cpp_var = tk.StringVar(value="wbi.exe")
+        self.cpp_var = tk.StringVar(value=str(paths.find_wbi_cpp()))
         self.network_xlsx_var = tk.StringVar()
         self.quotas_xlsx_var = tk.StringVar()
         self.output_xlsx_var = tk.StringVar()
@@ -35,17 +37,17 @@ class MainWindow(tk.Tk):
 
         main_frame.columnconfigure(1, weight=1)
 
-        self.add_file_row(
-            parent=main_frame,
-            row=0,
-            label="C++ exe:",
-            var=self.cpp_var,
-            save=False,
-        )
+        # self.add_file_row(
+        #     parent=main_frame,
+        #     row=0,
+        #     label="C++ exe:",
+        #     var=self.cpp_var,
+        #     save=False,
+        # )
 
         self.add_file_row(
             parent=main_frame,
-            row=1,
+            row=0,
             label="Quotas xlsx:",
             var=self.quotas_xlsx_var,
             save=False,
@@ -53,7 +55,7 @@ class MainWindow(tk.Tk):
 
         self.add_file_row(
             parent=main_frame,
-            row=2,
+            row=1,
             label="Network xlsx:",
             var=self.network_xlsx_var,
             save=False,
@@ -61,37 +63,37 @@ class MainWindow(tk.Tk):
 
         self.add_file_row(
             parent=main_frame,
-            row=3,
+            row=2,
             label="Output xlsx:",
             var=self.output_xlsx_var,
             save=True,
         )
 
-        ttk.Label(main_frame, text="K:").grid(row=4, column=0, sticky=tk.W, pady=4)
+        ttk.Label(main_frame, text="K:").grid(row=3, column=0, sticky=tk.W, pady=4)
         ttk.Entry(main_frame, textvariable=self.k_var, width=10).grid(
-            row=4,
+            row=3,
             column=1,
             sticky=tk.W,
             pady=4,
         )
 
-        ttk.Label(main_frame, text="Mode:").grid(row=5, column=0, sticky=tk.W, pady=4)
+        ttk.Label(main_frame, text="Mode:").grid(row=4, column=0, sticky=tk.W, pady=4)
         ttk.Combobox(
             main_frame,
             textvariable=self.mode_var,
             values=["linear", "parallel", "compare"],
             state="readonly",
             width=20,
-        ).grid(row=5, column=1, sticky=tk.W, pady=4)
+        ).grid(row=4, column=1, sticky=tk.W, pady=4)
 
-        ttk.Label(main_frame, text="Metric:").grid(row=6, column=0, sticky=tk.W, pady=4)
+        ttk.Label(main_frame, text="Metric:").grid(row=5, column=0, sticky=tk.W, pady=4)
         ttk.Combobox(
             main_frame,
             textvariable=self.metric_var,
             values=["wbi1", "wbi2", "both"],
             state="readonly",
             width=20,
-        ).grid(row=6, column=1, sticky=tk.W, pady=4)
+        ).grid(row=5, column=1, sticky=tk.W, pady=4)
 
         self.start_button = ttk.Button(
             main_frame,
@@ -99,14 +101,14 @@ class MainWindow(tk.Tk):
             command=self.start_click,
         )
 
-        self.start_button.grid(row=8, column=1, sticky=tk.W, pady=10)
+        self.start_button.grid(row=6, column=1, sticky=tk.W, pady=10)
 
-        ttk.Label(main_frame, text="Log:").grid(row=9, column=0, sticky=tk.NW, pady=4)
+        ttk.Label(main_frame, text="Log:").grid(row=7, column=0, sticky=tk.NW, pady=4)
 
         self.log_text = scrolledtext.ScrolledText(main_frame, height=18)
-        self.log_text.grid(row=9, column=1, sticky=tk.NSEW, pady=4)
+        self.log_text.grid(row=7, column=1, sticky=tk.NSEW, pady=4)
 
-        main_frame.rowconfigure(9, weight=1)
+        main_frame.rowconfigure(8, weight=1)
 
     def add_file_row(
         self, parent: ttk.Frame, row: int, label: str, var: tk.StringVar, save: bool

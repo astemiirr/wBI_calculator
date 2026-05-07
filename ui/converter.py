@@ -31,8 +31,8 @@ class ExcelCsvConverter:
         k: int,
         metric: str,
     ):
-        linear_df = pd.read_csv(linear_csv, sep=";")
-        parallel_df = pd.read_csv(parallel_csv, sep=";")
+        linear_df = pd.read_csv(linear_csv)
+        parallel_df = pd.read_csv(parallel_csv)
 
         linear_df = linear_df.iloc[:, :3].copy()
         parallel_df = parallel_df.iloc[:, :3].copy()
