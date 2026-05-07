@@ -34,3 +34,9 @@ logs/
 data/
 *.csv
 *.json
+~$*.xlsx
+
+# Python
+.venv/
+__pycache__/
+*.pyc
