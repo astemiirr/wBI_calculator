@@ -1,68 +1,142 @@
-====================================================================
-Weighted Bundle Index Calculator
-====================================================================
+# Weighted Bundle Index Calculator
 
-Программа для вычисления взвешенных бундельных индексов.
-Автоматически конвертирует XLSX файлы в CSV, вычисляет индексы,
-сохраняет результаты в XLSX.
+Кроссплатформенная программа для вычисления взвешенных бандельных индексов.
 
-====================================================================
-Раздел для Ubuntu/Linux
-====================================================================
+Поддерживает:
 
-Быстрый запуск (уже откомпилированный main):
-Требования: LibreOffice ИЛИ Python с pandas
-1. Установите зависимости:
-   - Вариант A: sudo apt install libreoffice
-   - Вариант B: sudo apt install python3 python3-pip; pip3 install pandas openpyxl
-2. Поместите main в папку с quotas.xlsx и network.xlsx
-3. Дайте права: chmod +x main
-4. Запустите: ./main
-5. Результат в results.xlsx
+* Windows
+* Linux / Ubuntu
 
-Компиляция и запуск (если нужно скомпилировать у себя):
-Требования: g++, OpenMP, LibreOffice/Python
-1. Установите: sudo apt install g++ libomp-dev
-2. Скомпилируйте: g++ -fopenmp -O3 main.cpp -o main
-3. Установите LibreOffice или Python с pandas
-4. Запустите: ./main
+Автоматически:
 
-Возможные проблемы и советы:
-- "Error converting...": установите LibreOffice или Python с pandas
-- "Permission denied": chmod +x main
-- Нет XLSX файлов: нужны quotas.xlsx и network.xlsx
+* конвертирует `.xlsx` <--> `.csv`
+* вычисляет индексы
+* сохраняет результат в `.xlsx`
 
-====================================================================
-Раздел для Windows
-====================================================================
+---
 
-Быстрый запуск (уже откомпилированный main.exe):
-Требования: Python с pandas (ОБЯЗАТЕЛЬНО!)
-1. Установите Python с python.org (отметьте "Add Python to PATH")
-2. Установите pandas: pip install pandas openpyxl
-3. Поместите main.exe в папку с quotas.xlsx и network.xlsx
-4. Двойной клик по main.exe
-5. Результат в results.xlsx
+# Требования
 
-Компиляция и запуск (если нужно скомпилировать у себя):
-Требования: MinGW-w64, Python с pandas
-1. Установите MinGW-w64 (winlibs.com) и Python с pandas
-2. Скомпилируйте: g++ -fopenmp -static -O3 main.cpp -o main.exe
-3. Запустите: main.exe
+## Общие
 
-Возможные проблемы и советы:
-- "Python not available": установите Python и pandas
-- Антивирус блокирует: разрешите запуск
-- Ошибка DLL: используйте -static при компиляции
+* CMake >= 3.15
+* C++ компилятор с поддержкой C++17
+* OpenMP
 
-====================================================================
-Формат входных файлов:
-====================================================================
+## Для работы с Excel
 
-quotas.xlsx: таблица со столбцами "страна" и "квота" (НЕТ заголовка!)
-network.xlsx: таблица со столбцами "от_страны", "к_стране", "вес" (ЕСТЬ заголовок!)
+**Windows:**
 
-results.xlsx: таблица со столбцами:
-- Country (страна)
-- Weighted Bundle Index 1 (взвешенный бундельный индекс 1)
-- Weighted Bundle Index 2 (взвешенный бундельный индекс 2)
+* Python + pandas + openpyxl
+  или
+* Microsoft Excel (через PowerShell)
+
+**Linux:**
+
+* LibreOffice
+  или
+* Python + pandas + openpyxl
+
+---
+
+# Сборка проекта
+
+## Windows (MinGW + Ninja)
+
+### 1. Установить:
+
+* GCC (например через WinLibs)
+* CMake
+* Ninja
+
+### 2. Добавить в PATH:
+
+```
+C:\...\gcc\bin
+C:\...\ninja
+C:\...\cmake\bin
+```
+
+### 3. Сборка:
+
+```
+mkdir build
+cd build
+cmake .. -G "Ninja"
+cmake --build .
+```
+
+---
+
+## Linux / Ubuntu
+
+### 1. Установить зависимости:
+
+```
+sudo apt update
+sudo apt install g++ cmake ninja-build libomp-dev
+```
+
+### 2. Сборка:
+
+```
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+---
+
+# Запуск
+
+Перейдите в папку `build`:
+
+```
+./wbi 3
+```
+
+или на Windows:
+
+```
+wbi.exe 3
+```
+
+где:
+
+* `3` — параметр K
+
+---
+
+# Формат входных файлов
+
+## quotas.xlsx
+
+| Country | Quota |
+| ------- | ----- |
+| USA     | 100   |
+| UK      | 50    |
+
+---
+
+## network.xlsx
+
+| from | to | weight |
+| ---- | -- | ------ |
+| USA  | UK | 10     |
+
+---
+
+# Результат
+
+Создаётся файл:
+
+```
+results.xlsx
+```
+
+С колонками:
+
+* Country
+* Weighted Bundle Index 1
+* Weighted Bundle Index 2
