@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     }
     catch (std::runtime_error re)
     {
-        std::cout << "Warning: " << re.what();
+        std::cerr << "Warning loading graph: " << re.what();
         return 1;
     }
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     }
     catch (std::runtime_error re)
     {
-        std::cout << "Warning: " << re.what();
+        std::cerr << "Calculating error: " << re.what();
         return 1;
     }
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     }
     catch (std::runtime_error re)
     {
-        std::cout << "Warning: " << re.what();
+        std::cerr << "Error output answer: " << re.what();
         return 1;
     }
 
