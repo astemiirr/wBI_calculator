@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3)
+# cmake_minimum_required(VERSION 4.3)
 
 project(wBI_calculator LANGUAGES CXX)
 
