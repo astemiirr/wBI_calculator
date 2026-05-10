@@ -6,6 +6,7 @@ from threading import Thread
 from pathlib import Path
 from settings import RunSettings
 from pipeline import Pipeline
+from translator import translator
 
 import paths
 
@@ -14,7 +15,11 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("WBI Grapsh Centrality")
+        self.tr = translator()
+
+        self.t = self.tr.t
+
+        self.title(self.t("title"))
 
         self.geometry("900x600")
         self.minsize(800, 500)
@@ -26,8 +31,20 @@ class MainWindow(tk.Tk):
         self.quotas_xlsx_var = tk.StringVar()
         self.output_dir_var = tk.StringVar()
         self.k_var = tk.StringVar(value="2")
-        self.mode_var = tk.StringVar(value="parallel")
-        self.metric_var = tk.StringVar(value="both")
+        self.mode_var = tk.StringVar(value=self.t("mode_parallel"))
+        self.metric_var = tk.StringVar(value=self.t("metric_both"))
+
+        self.mode_to_code = {
+            self.t("mode_linear"): "linear",
+            self.t("mode_parallel"): "parallel",
+            self.t("mode_compare"): "compare",
+        }
+
+        self.metric_to_code = {
+            "WBI 1": "wbi1",
+            "WBI 2": "wbi2",
+            self.t("metric_both"): "both",
+        }
 
         self.build_ui()
 
@@ -48,25 +65,25 @@ class MainWindow(tk.Tk):
         self.add_file_row(
             parent=main_frame,
             row=0,
-            label="Quotas xlsx:",
+            label=self.t("quotas_file"),
             var=self.quotas_xlsx_var,
-            save=False,
+            folder=False,
         )
 
         self.add_file_row(
             parent=main_frame,
             row=1,
-            label="Network xlsx:",
+            label=self.t("network_file"),
             var=self.network_xlsx_var,
-            save=False,
+            folder=False,
         )
 
         self.add_file_row(
             parent=main_frame,
             row=2,
-            label="Output dir:",
+            label=self.t("output_folder"),
             var=self.output_dir_var,
-            save=True,
+            folder=True,
         )
 
         ttk.Label(main_frame, text="K:").grid(row=3, column=0, sticky=tk.W, pady=4)
@@ -77,33 +94,43 @@ class MainWindow(tk.Tk):
             pady=4,
         )
 
-        ttk.Label(main_frame, text="Mode:").grid(row=4, column=0, sticky=tk.W, pady=4)
+        ttk.Label(main_frame, text=self.t("mode")).grid(
+            row=4, column=0, sticky=tk.W, pady=4
+        )
         ttk.Combobox(
             main_frame,
             textvariable=self.mode_var,
-            values=["linear", "parallel", "compare"],
+            values=[
+                self.t("mode_linear"),
+                self.t("mode_parallel"),
+                self.t("mode_compare"),
+            ],
             state="readonly",
             width=20,
         ).grid(row=4, column=1, sticky=tk.W, pady=4)
 
-        ttk.Label(main_frame, text="Metric:").grid(row=5, column=0, sticky=tk.W, pady=4)
+        ttk.Label(main_frame, text=self.t("metric")).grid(
+            row=5, column=0, sticky=tk.W, pady=4
+        )
         ttk.Combobox(
             main_frame,
             textvariable=self.metric_var,
-            values=["wbi1", "wbi2", "both"],
+            values=["WBI 1", "WBI 2", self.t("metric_both")],
             state="readonly",
             width=20,
         ).grid(row=5, column=1, sticky=tk.W, pady=4)
 
         self.start_button = ttk.Button(
             main_frame,
-            text="Start",
+            text=self.t("start"),
             command=self.start_click,
         )
 
         self.start_button.grid(row=6, column=1, sticky=tk.W, pady=10)
 
-        ttk.Label(main_frame, text="Log:").grid(row=7, column=0, sticky=tk.NW, pady=4)
+        ttk.Label(main_frame, text=self.t("log")).grid(
+            row=7, column=0, sticky=tk.NW, pady=4
+        )
 
         self.log_text = scrolledtext.ScrolledText(main_frame, height=18)
         self.log_text.grid(row=7, column=1, sticky=tk.NSEW, pady=4)
@@ -111,7 +138,7 @@ class MainWindow(tk.Tk):
         main_frame.rowconfigure(8, weight=1)
 
     def add_file_row(
-        self, parent: ttk.Frame, row: int, label: str, var: tk.StringVar, save: bool
+        self, parent: ttk.Frame, row: int, label: str, var: tk.StringVar, folder: bool
     ):
         ttk.Label(parent, text=label).grid(row=row, column=0, sticky=tk.W, pady=4)
 
@@ -125,24 +152,22 @@ class MainWindow(tk.Tk):
 
         ttk.Button(
             parent,
-            text="Browse",
-            command=lambda: self.browse_file(var, save),
+            text=self.t("select"),
+            command=lambda: self.browse_file(var, folder),
         ).grid(row=row, column=2, pady=4)
 
-    def browse_file(self, var: tk.StringVar, save: bool):
-        if save:
-            filename = filedialog.asksaveasfilename(
-                defaultextension=".xlsx",
-                filetypes=[("Excel files", "*.xlsx")],
-            )
+    def browse_file(self, var: tk.StringVar, folder: bool):
+        if folder:
+            filename = filedialog.askdirectory(title=self.t("choose_folder"))
         else:
             filename = filedialog.askopenfilename(
+                title=self.t("choose_file"),
                 filetypes=[
                     ("All supported files", "*.xlsx *.exe"),
                     ("Excel files", "*.xlsx"),
                     ("Executable files", "*.exe"),
                     ("All files", "*.*"),
-                ]
+                ],
             )
 
         if filename:
@@ -152,7 +177,7 @@ class MainWindow(tk.Tk):
         try:
             settings = self.read_settings()
         except ValueError as error:
-            messagebox.showerror("Input error", str(error))
+            messagebox.showerror(self.t("input_error"), str(error))
             return
 
         self.start_button.config(state=tk.DISABLED)
@@ -169,21 +194,21 @@ class MainWindow(tk.Tk):
 
     def read_settings(self) -> RunSettings:
         if not self.quotas_xlsx_var.get():
-            raise ValueError("Choose quotas.xlsx")
+            raise ValueError(self.t("choose_quotas"))
 
         if not self.network_xlsx_var.get():
-            raise ValueError("Choose network.xlsx")
+            raise ValueError(self.t("choose_network"))
 
         if not self.output_dir_var.get():
-            raise ValueError("Choose output folder")
+            raise ValueError(self.t("choose_output_folder"))
 
         try:
             k = int(self.k_var.get())
         except ValueError:
-            raise ValueError("k must be an integer")
+            raise ValueError(self.t("k_must_be_an_integer"))
 
         if k <= 0:
-            raise ValueError("k must be positive")
+            raise ValueError(self.t("k_must_be_positive"))
 
         return RunSettings(
             cpp=Path(self.cpp_var.get()),
@@ -191,17 +216,19 @@ class MainWindow(tk.Tk):
             network_xlsx=Path(self.network_xlsx_var.get()),
             output_xlsx=Path(self.output_dir_var.get()) / "result.xlsx",
             k=k,
-            mode=self.mode_var.get(),
-            metric=self.metric_var.get(),
+            mode=self.mode_to_code[self.mode_var.get()],
+            metric=self.metric_to_code[self.metric_var.get()],
         )
 
     def run_pipeline(self, settings: RunSettings):
         try:
             self.pipeline.run(settings, self._log_thread)
-            self.after(0, lambda: messagebox.showinfo("Done", "Calculation finished"))
+            self.after(
+                0, lambda: messagebox.showinfo(self.t("done"), self.t("done_message"))
+            )
         except Exception as er:
             error_text = str(er)
-            self.after(0, lambda: messagebox.showerror("Error", error_text))
+            self.after(0, lambda: messagebox.showerror(self.t("error"), error_text))
         finally:
             self.after(0, lambda: self.start_button.config(state=tk.NORMAL))
 

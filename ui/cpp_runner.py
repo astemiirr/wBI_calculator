@@ -43,7 +43,7 @@ class CppRunner:
             metric,
         ]
 
-        log("Запуск C++: ".join(command))
+        log("Запуск C++: " + " ".join(command))
 
         start_time = time.perf_counter()
 
