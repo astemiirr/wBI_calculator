@@ -24,7 +24,7 @@ class MainWindow(tk.Tk):
         self.cpp_var = tk.StringVar(value=str(paths.find_wbi_cpp()))
         self.network_xlsx_var = tk.StringVar()
         self.quotas_xlsx_var = tk.StringVar()
-        self.output_xlsx_var = tk.StringVar()
+        self.output_dir_var = tk.StringVar()
         self.k_var = tk.StringVar(value="2")
         self.mode_var = tk.StringVar(value="parallel")
         self.metric_var = tk.StringVar(value="both")
@@ -64,8 +64,8 @@ class MainWindow(tk.Tk):
         self.add_file_row(
             parent=main_frame,
             row=2,
-            label="Output xlsx:",
-            var=self.output_xlsx_var,
+            label="Output dir:",
+            var=self.output_dir_var,
             save=True,
         )
 
@@ -174,8 +174,8 @@ class MainWindow(tk.Tk):
         if not self.network_xlsx_var.get():
             raise ValueError("Choose network.xlsx")
 
-        if not self.output_xlsx_var.get():
-            raise ValueError("Choose output.xlsx")
+        if not self.output_dir_var.get():
+            raise ValueError("Choose output folder")
 
         try:
             k = int(self.k_var.get())
@@ -189,7 +189,7 @@ class MainWindow(tk.Tk):
             cpp=Path(self.cpp_var.get()),
             quotas_xlsx=Path(self.quotas_xlsx_var.get()),
             network_xlsx=Path(self.network_xlsx_var.get()),
-            output_xlsx=Path(self.output_xlsx_var.get()),
+            output_xlsx=Path(self.output_dir_var.get()) / "result.xlsx",
             k=k,
             mode=self.mode_var.get(),
             metric=self.metric_var.get(),
